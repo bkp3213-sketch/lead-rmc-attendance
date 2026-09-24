@@ -140,20 +140,13 @@ button:disabled{opacity:.55;cursor:not-allowed}
     </div>
 
     <div class="buttons">
-      <button id="checkInBtn" class="checkin" onclick="markAttendance('checkIn')" disabled>
-        CHECK IN
-      </button>
-
-      <button id="checkOutBtn" class="checkout" onclick="markAttendance('checkOut')" disabled>
-        CHECK OUT
-      </button>
       <button
-  id="manualBtn"
-  class="manual"
-  onclick="manualVerification()"
-  style="display:none;">
-  🆘 MANUAL VERIFICATION
-</button>
+        id="manualBtn"
+        class="manual"
+        onclick="manualVerification()"
+        style="display:none;">
+        🆘 MANUAL VERIFICATION
+      </button>
     </div>
 
     <div class="info">
@@ -190,14 +183,19 @@ const ALLOWED_RADIUS = 50;
 let cameraStream = null;
 let appReady = false;
 let busy = false;
+let scanTimer = null;
+let waitingForFaceToLeave = false;
+let noFaceSince = 0;
+let autoScanStopped = false;
+let lastScanTime = 0;
 
 // Face verification attempts
 let faceAttempts = 0;
 const MAX_FACE_ATTEMPTS = 3;
+const SCAN_INTERVAL = 1200;
+const SCAN_COOLDOWN = 3000;
 
 const statusEl = document.getElementById("status");
-const checkInBtn = document.getElementById("checkInBtn");
-const checkOutBtn = document.getElementById("checkOutBtn");
 const video = document.getElementById("video");
 
 function setStatus(message, type = "") {
@@ -250,12 +248,12 @@ async function initialise() {
     await startCamera();
 
     appReady = true;
-    checkInBtn.disabled = false;
-    checkOutBtn.disabled = false;
 
     setStatus(
-      "✅ Ready.<br>Look directly at the camera and choose Check In or Check Out."
+      "📷 <b>Ready.</b><br>Face the camera. Attendance will be marked automatically."
     );
+
+    startAutoFaceScan();
 
   } catch (error) {
     console.error(error);
@@ -356,121 +354,115 @@ function getLocation() {
   });
 }
 
-async function markAttendance(action) {
-  if (!appReady || busy) return;
+async function autoMarkAttendance(faceResult, latitude, longitude, distance) {
+  const status = await getTodayAttendance(faceResult.employeeId);
+
+  if (!status.success) {
+    throw new Error(status.message || "Unable to check today's attendance.");
+  }
+
+  let action = "";
+  let actionName = "";
+
+  if (!status.checkedIn) {
+    action = "checkIn";
+    actionName = "Check In";
+  } else if (!status.checkedOut) {
+    action = "checkOut";
+    actionName = "Check Out";
+  } else {
+    return {
+      success: false,
+      alreadyComplete: true,
+      message: "Your attendance is already completed for today."
+    };
+  }
+
+  setStatus(
+    "📍 " + Math.round(distance) + " m from office.<br>" +
+    "⏳ Saving <b>" + actionName + "</b> automatically..."
+  );
+
+  return await postData({
+    action: action,
+    employeeId: faceResult.employeeId,
+    employeeName: faceResult.employeeName,
+    latitude: latitude,
+    longitude: longitude
+  });
+}
+
+async function processFaceScan() {
+  if (!appReady || busy || waitingForFaceToLeave || autoScanStopped) return;
+  if (Date.now() - lastScanTime < SCAN_COOLDOWN) return;
 
   busy = true;
-  checkInBtn.disabled = true;
-  checkOutBtn.disabled = true;
-
-  const actionName = action === "checkIn" ? "Check In" : "Check Out";
+  lastScanTime = Date.now();
 
   try {
-    setStatus("📷 Scanning face...<br><br><b>🙂 Please bring your face in front of the camera.</b>");
+    const detection = await faceapi
+      .detectSingleFace(
+        video,
+        new faceapi.TinyFaceDetectorOptions({
+          inputSize: 320,
+          scoreThreshold: 0.5
+        })
+      )
+      .withFaceLandmarks(true)
+      .withFaceDescriptor();
 
-    let descriptor = null;
-
-    // Do not count an attempt when no face is visible.
-    // Wait until a face comes in front of the camera.
-    for (let i = 0; i < 20; i++) {
-      descriptor = await captureDescriptor();
-
-      if (descriptor) {
-        break;
-      }
-
+    // No face = no failed attempt. Just ask the employee to face the camera.
+    if (!detection) {
       setStatus(
-        "📷 <b>Face not detected</b><br><br>" +
-        "🙂 Please bring your face in front of the camera."
+        "📷 <b>Face not detected.</b><br>🙂 Please bring your face in front of the camera."
       );
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    if (!descriptor) {
-      setStatus(
-        "📷 <b>Face not detected</b><br><br>" +
-        "🙂 Please bring your face in front of the camera and try again.",
-        "error"
-      );
+      busy = false;
       return;
     }
 
-    setStatus("🔍 Verifying face...");
-    const faceResult = await verifyFace(descriptor);
+    setStatus("🔍 Face detected. Verifying...");
+
+    const faceResult = await verifyFace(Array.from(detection.descriptor));
 
     if (!faceResult.success) {
       faceAttempts++;
 
       if (faceAttempts < MAX_FACE_ATTEMPTS) {
         const remaining = MAX_FACE_ATTEMPTS - faceAttempts;
-
         setStatus(
           "❌ <b>Face verification failed</b><br>" +
           escapeHtml(faceResult.message || "Face not recognised.") +
-          "<br><br>🔄 Please try again." +
+          "<br><br>🔄 Please face the camera again." +
           "<br><b>Attempt " + faceAttempts + " of " + MAX_FACE_ATTEMPTS + "</b>" +
           "<br>" + remaining + " attempt(s) remaining.",
           "error"
         );
       } else {
+        document.getElementById("manualBtn").style.display = "block";
+        autoScanStopped = true;
         setStatus(
-          "❌ <b>Face verification failed 3 times</b><br>" +
-          "You can now use Manual Verification.",
+          "❌ <b>Face verification failed 3 times.</b><br>" +
+          "🆘 Manual Verification is now available.",
           "error"
         );
-
-        document.getElementById("manualBtn").style.display = "block";
       }
 
+      waitingForFaceToLeave = true;
+      noFaceSince = 0;
+      busy = false;
       return;
     }
 
-    // Face verification successful - reset attempts
     faceAttempts = 0;
     document.getElementById("manualBtn").style.display = "none";
 
-    // Decide Check-In / Check-Out automatically from today's attendance
     setStatus(
-      "✅ Face verified.<br>" +
-      "<b>" + escapeHtml(faceResult.employeeName) + "</b><br>" +
-      "🔎 Checking today's attendance status..."
-    );
-
-    const attendanceStatus = await getTodayAttendance(faceResult.employeeId);
-
-    if (!attendanceStatus.success) {
-      throw new Error(attendanceStatus.message || "Unable to check today's attendance status.");
-    }
-
-    let action;
-    let actionName;
-
-    if (!attendanceStatus.checkedIn) {
-      action = "checkIn";
-      actionName = "Check In";
-    } else if (!attendanceStatus.checkedOut) {
-      action = "checkOut";
-      actionName = "Check Out";
-    } else {
-      setStatus(
-        "ℹ️ <b>Attendance already completed for today.</b><br><br>" +
-        "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
-        "You have already checked in and checked out today.",
-        "success"
-      );
-      return;
-    }
-
-    setStatus(
-      "✅ Face verified.<br>" +
-      "<b>" + escapeHtml(faceResult.employeeName) + "</b><br>" +
-      "📍 Checking office location...<br>" +
-      "➡️ Auto " + actionName + " selected."
+      "✅ Face verified.<br><b>" +
+      escapeHtml(faceResult.employeeName) +
+      "</b><br>📍 Checking office location..."
     );
 
     const position = await getLocation();
-
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
 
@@ -488,41 +480,35 @@ async function markAttendance(action) {
         "Allowed: " + ALLOWED_RADIUS + " metres",
         "error"
       );
+      waitingForFaceToLeave = true;
+      busy = false;
       return;
     }
 
-    setStatus(
-      "📍 You are " + Math.round(distance) +
-      " m from the office.<br>Saving " + actionName + "..."
+    const result = await autoMarkAttendance(
+      faceResult,
+      latitude,
+      longitude,
+      distance
     );
 
-    const result = await postData({
-      action: action,
-      employeeId: faceResult.employeeId,
-      employeeName: faceResult.employeeName,
-      latitude: latitude,
-      longitude: longitude
-    });
-
-    if (result.success) {
-      if (action === "checkIn") {
-        setStatus(
-          "✅ <b>CHECK-IN SUCCESSFUL!</b><br><br>" +
-          "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
-          "Time: " + escapeHtml(result.time || "") + "<br>" +
-          "Distance: " + escapeHtml(String(result.distance || Math.round(distance))) + " m",
-          "success"
-        );
-      } else {
-        setStatus(
-          "✅ <b>CHECK-OUT SUCCESSFUL!</b><br><br>" +
-          "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
-          "Time: " + escapeHtml(result.time || "") + "<br>" +
-          "Working Hours: " + escapeHtml(result.workingHours || "") + "<br>" +
-          "Distance: " + escapeHtml(String(result.distance || Math.round(distance))) + " m",
-          "success"
-        );
-      }
+    if (result.alreadyComplete) {
+      setStatus(
+        "ℹ️ <b>Attendance already completed today.</b><br>" +
+        escapeHtml(faceResult.employeeName),
+        "success"
+      );
+    } else if (result.success) {
+      const isCheckIn = result.message && /check.?in/i.test(result.message);
+      setStatus(
+        "✅ <b>" + (isCheckIn ? "CHECK-IN" : "CHECK-OUT") +
+        " SUCCESSFUL!</b><br><br>" +
+        "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
+        "Time: " + escapeHtml(result.time || "") +
+        (result.workingHours ? "<br>Working Hours: " + escapeHtml(result.workingHours) : "") +
+        "<br>Distance: " + escapeHtml(String(result.distance || Math.round(distance))) + " m",
+        "success"
+      );
     } else {
       setStatus(
         "❌ " + escapeHtml(result.message || "Attendance failed."),
@@ -530,41 +516,59 @@ async function markAttendance(action) {
       );
     }
 
+    // Require the employee to move away and then face the camera again.
+    waitingForFaceToLeave = true;
+    noFaceSince = 0;
+
   } catch (error) {
     console.error(error);
-
-    // Only actual face verification errors count as attempts.
-    // A missing face is handled before verification and does not count.
-
-    if (faceAttempts >= MAX_FACE_ATTEMPTS) {
-      document.getElementById("manualBtn").style.display = "block";
-
-      setStatus(
-        "❌ <b>Face verification failed 3 times</b><br>" +
-        escapeHtml(error.message) +
-        "<br><br>🆘 You can now use Manual Verification.",
-        "error"
-      );
-    } else {
-      const remaining = MAX_FACE_ATTEMPTS - faceAttempts;
-
-      setStatus(
-        "❌ <b>Face verification failed</b><br>" +
-        escapeHtml(error.message) +
-        "<br><br>🔄 Please try again." +
-        "<br><b>Attempt " + faceAttempts + " of " + MAX_FACE_ATTEMPTS + "</b>" +
-        "<br>" + remaining + " attempt(s) remaining.",
-        "error"
-      );
-    }
+    setStatus("❌ " + escapeHtml(error.message), "error");
+    waitingForFaceToLeave = true;
+    noFaceSince = 0;
   } finally {
     busy = false;
-
-    if (appReady) {
-      checkInBtn.disabled = false;
-      checkOutBtn.disabled = false;
-    }
   }
+}
+
+async function monitorFaceLeave() {
+  if (!waitingForFaceToLeave || busy || !appReady) return;
+
+  try {
+    const detection = await faceapi.detectSingleFace(
+      video,
+      new faceapi.TinyFaceDetectorOptions({
+        inputSize: 320,
+        scoreThreshold: 0.5
+      })
+    );
+
+    if (!detection) {
+      if (!noFaceSince) noFaceSince = Date.now();
+
+      if (Date.now() - noFaceSince >= 1000) {
+        waitingForFaceToLeave = false;
+        noFaceSince = 0;
+        setStatus("📷 <b>Ready for next scan.</b><br>Face the camera again.");
+      }
+    } else {
+      noFaceSince = 0;
+    }
+  } catch (error) {
+    console.warn("Face leave check:", error);
+  }
+}
+
+function startAutoFaceScan() {
+  if (scanTimer) clearInterval(scanTimer);
+
+  scanTimer = setInterval(async () => {
+    if (autoScanStopped) return;
+    if (waitingForFaceToLeave) {
+      await monitorFaceLeave();
+    } else {
+      await processFaceScan();
+    }
+  }, SCAN_INTERVAL);
 }
 
 async function manualVerification() {
@@ -594,9 +598,6 @@ async function manualVerification() {
   const actionName = confirmCheckIn ? "Check In" : "Check Out";
 
   busy = true;
-  checkInBtn.disabled = true;
-  checkOutBtn.disabled = true;
-
   try {
     setStatus("📍 Checking your office location...");
 
@@ -686,10 +687,6 @@ async function manualVerification() {
   } finally {
     busy = false;
 
-    if (appReady) {
-      checkInBtn.disabled = false;
-      checkOutBtn.disabled = false;
-    }
   }
 }
 
@@ -725,6 +722,7 @@ function escapeHtml(value) {
 }
 
 window.addEventListener("beforeunload", () => {
+  if (scanTimer) clearInterval(scanTimer);
   if (cameraStream) {
     cameraStream.getTracks().forEach(track => track.stop());
   }
