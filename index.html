@@ -99,6 +99,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
   gap:10px;
   margin-top:14px;
 }
+  .manual{
+  background:#f0ad4e;
+  color:white;
+}
 .info-box{
   background:#f7f8fa;
   border-radius:12px;
@@ -143,6 +147,13 @@ button:disabled{opacity:.55;cursor:not-allowed}
       <button id="checkOutBtn" class="checkout" onclick="markAttendance('checkOut')" disabled>
         CHECK OUT
       </button>
+      <button
+  id="manualBtn"
+  class="manual"
+  onclick="manualVerification()"
+  style="display:none;">
+  🆘 MANUAL VERIFICATION
+</button>
     </div>
 
     <div class="info">
@@ -355,9 +366,12 @@ async function markAttendance(action) {
     if (!faceResult.success) {
       setStatus(
         "❌ <b>Face verification failed</b><br>" +
-        escapeHtml(faceResult.message || "Face not recognised."),
+        escapeHtml(faceResult.message || "Face not recognised.") +
+        "<br><br>If you are an employee, use Manual Verification.",
         "error"
       );
+
+      document.getElementById("manualBtn").style.display = "block";
       return;
     }
 
@@ -424,6 +438,124 @@ async function markAttendance(action) {
     } else {
       setStatus(
         "❌ " + escapeHtml(result.message || "Attendance failed."),
+        "error"
+      );
+    }
+
+  } catch (error) {
+    console.error(error);
+    setStatus("❌ " + escapeHtml(error.message), "error");
+  } finally {
+    busy = false;
+
+    if (appReady) {
+      checkInBtn.disabled = false;
+      checkOutBtn.disabled = false;
+    }
+  }
+}
+
+async function manualVerification() {
+  if (busy) return;
+
+  const employeeId = prompt("Enter your Employee ID:");
+
+  if (!employeeId || !employeeId.trim()) {
+    return;
+  }
+
+  const cleanEmployeeId = employeeId.trim().toUpperCase();
+
+  const confirmCheckIn = confirm(
+    "Click OK for CHECK IN.\\n\\nClick Cancel for CHECK OUT."
+  );
+
+  const action = confirmCheckIn ? "checkIn" : "checkOut";
+  const actionName = confirmCheckIn ? "Check In" : "Check Out";
+
+  busy = true;
+  checkInBtn.disabled = true;
+  checkOutBtn.disabled = true;
+
+  try {
+    setStatus("📍 Checking your office location...");
+
+    const position = await getLocation();
+
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+
+    const distance = calculateDistance(
+      latitude,
+      longitude,
+      OFFICE_LAT,
+      OFFICE_LNG
+    );
+
+    if (distance > ALLOWED_RADIUS) {
+      setStatus(
+        "❌ <b>Outside office location</b><br>" +
+        "Distance: " + Math.round(distance) + " metres<br>" +
+        "Allowed: " + ALLOWED_RADIUS + " metres",
+        "error"
+      );
+      return;
+    }
+
+    setStatus("🔎 Checking Employee ID...");
+
+    const employeeResponse = await fetch(
+      APPS_SCRIPT_URL +
+      "?action=getEmployee&employeeId=" +
+      encodeURIComponent(cleanEmployeeId)
+    );
+
+    const employeeText = await employeeResponse.text();
+
+    let employeeResult;
+
+    try {
+      employeeResult = JSON.parse(employeeText);
+    } catch (error) {
+      console.error("Employee lookup response:", employeeText);
+      throw new Error("Invalid response from attendance server.");
+    }
+
+    if (!employeeResult.success) {
+      setStatus(
+        "❌ <b>Employee ID not found</b><br>" +
+        escapeHtml(employeeResult.message || "Please enter a valid Employee ID."),
+        "error"
+      );
+      return;
+    }
+
+    const employeeName = employeeResult.employeeName || "";
+
+    setStatus("⏳ Sending manual verification request...");
+
+    const result = await postData({
+      action: "manualRequest",
+      employeeId: cleanEmployeeId,
+      employeeName: employeeName,
+      type: action,
+      latitude: latitude,
+      longitude: longitude
+    });
+
+    if (result.success) {
+      setStatus(
+        "✅ <b>MANUAL VERIFICATION REQUEST SENT</b><br><br>" +
+        "Employee: " + escapeHtml(employeeName) + "<br>" +
+        "Type: " + escapeHtml(actionName) + "<br>" +
+        "Request ID: " + escapeHtml(result.requestId || "") + "<br>" +
+        "Distance: " + escapeHtml(String(result.distance || Math.round(distance))) + " m<br><br>" +
+        "Please wait for admin approval.",
+        "success"
+      );
+    } else {
+      setStatus(
+        "❌ " + escapeHtml(result.message || "Manual request failed."),
         "error"
       );
     }
