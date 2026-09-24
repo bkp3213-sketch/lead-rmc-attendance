@@ -362,7 +362,35 @@ async function registerFace() {
     form.action =
       APPS_SCRIPT_URL;
 
-    form.submit();
+// Submit to Apps Script
+
+const form =
+  document.getElementById("registrationForm");
+
+form.action =
+  APPS_SCRIPT_URL;
+
+status.innerHTML =
+  "💾 Saving employee...";
+
+button.disabled = true;
+
+button.innerText =
+  "SAVING...";
+
+form.submit();
+
+setTimeout(function () {
+
+  status.innerHTML =
+    "✅ <b>Employee Registered Successfully!</b><br><br>" +
+    "Employee: " + employeeName +
+    "<br>ID: " + employeeId;
+
+  button.innerText =
+    "REGISTERED";
+
+}, 3000);
 
 
   } catch (error) {
