@@ -2,669 +2,962 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>LEAD RMC - Employee Registration</title>
+<meta charset="UTF-8">
 
-  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-  <style>
+<title>LEAD RMC - Face Registration</title>
 
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #f4f6f8;
+<style>
 
-      display: flex;
-      justify-content: center;
-      align-items: center;
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
 
-      padding: 20px;
-    }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f4f6f8;
 
-    .card {
-      width: 100%;
-      max-width: 430px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-      background: white;
+  padding: 20px;
+}
 
-      padding: 25px;
+.card {
+  width: 100%;
+  max-width: 430px;
 
-      border-radius: 20px;
+  background: white;
 
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  padding: 25px;
 
-      text-align: center;
-    }
+  border-radius: 20px;
 
-    h1 {
-      margin: 0;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
 
-      font-size: 30px;
+  text-align: center;
+}
 
-      color: #111;
-    }
+h1 {
+  margin: 0;
 
-    .subtitle {
-      color: #777;
+  font-size: 30px;
 
-      margin-top: 6px;
-      margin-bottom: 20px;
+  color: #111;
+}
 
-      font-size: 17px;
-    }
+.subtitle {
+  color: #777;
 
-    input {
-      width: 100%;
+  margin-top: 6px;
+  margin-bottom: 20px;
 
-      padding: 14px;
+  font-size: 17px;
+}
 
-      margin-bottom: 12px;
+label {
+  display: block;
 
-      border: 1px solid #ddd;
+  text-align: left;
 
-      border-radius: 10px;
+  font-weight: bold;
 
-      font-size: 16px;
+  margin-bottom: 6px;
+}
 
-      outline: none;
-    }
+input {
+  width: 100%;
 
-    input:focus {
-      border-color: #1976d2;
-    }
+  padding: 14px;
 
-    video {
-      width: 100%;
+  margin-bottom: 10px;
 
-      margin-top: 8px;
+  border: 1px solid #ddd;
 
-      border-radius: 15px;
+  border-radius: 10px;
 
-      background: #111;
+  font-size: 16px;
 
-      transform: scaleX(-1);
+  outline: none;
 
-      display: block;
-    }
+  text-transform: uppercase;
+}
 
-    button {
-      width: 100%;
+input:focus {
+  border-color: #1976d2;
+}
 
-      padding: 15px;
+.nameBox {
+  width: 100%;
 
-      margin-top: 15px;
+  padding: 14px;
 
-      border: none;
+  margin-bottom: 12px;
 
-      border-radius: 10px;
+  background: #f1f3f5;
 
-      background: #1976d2;
+  border: 1px solid #ddd;
 
-      color: white;
+  border-radius: 10px;
 
-      font-size: 16px;
+  font-size: 16px;
 
-      font-weight: bold;
-    }
+  text-align: left;
 
-    button:disabled {
-      background: #aaa;
-    }
+  color: #555;
+}
 
-    #status {
-      margin-top: 16px;
+video {
+  width: 100%;
 
-      line-height: 1.5;
+  margin-top: 8px;
 
-      font-size: 15px;
-    }
+  border-radius: 15px;
 
-    .small {
-      margin-top: 12px;
+  background: #111;
 
-      font-size: 13px;
+  transform: scaleX(-1);
 
-      color: #777;
-    }
+  display: block;
+}
 
-    iframe {
-      display: none;
-    }
+button {
+  width: 100%;
 
-  </style>
+  padding: 15px;
+
+  margin-top: 15px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #1976d2;
+
+  color: white;
+
+  font-size: 16px;
+
+  font-weight: bold;
+}
+
+button:disabled {
+  background: #aaa;
+}
+
+.closeBtn {
+  background: #555;
+}
+
+#status {
+  margin-top: 16px;
+
+  line-height: 1.5;
+
+  font-size: 15px;
+}
+
+.small {
+  margin-top: 12px;
+
+  font-size: 13px;
+
+  color: #777;
+}
+
+.success {
+  color: #16803c;
+}
+
+.error {
+  color: #d93025;
+}
+
+.hidden {
+  display: none;
+}
+
+</style>
 
 </head>
 
 
 <body>
 
-  <div class="card">
+<div class="card">
 
-    <h1>LEAD RMC</h1>
+  <h1>LEAD RMC</h1>
 
-    <div class="subtitle">
-      Employee Face Registration
-    </div>
-
-
-    <input
-      type="text"
-      id="employeeId"
-      placeholder="Employee ID"
-      autocomplete="off">
+  <div class="subtitle">
+    Employee Face Registration
+  </div>
 
 
-    <input
-      type="text"
-      id="employeeName"
-      placeholder="Employee Name"
-      autocomplete="off">
+  <!-- EMPLOYEE ID -->
+
+  <label for="employeeId">
+    Employee ID
+  </label>
+
+  <input
+    type="text"
+    id="employeeId"
+    placeholder="Enter Employee ID"
+    autocomplete="off">
 
 
-    <video
-      id="video"
-      autoplay
-      muted
-      playsinline>
-    </video>
+  <!-- EMPLOYEE NAME FROM SHEET -->
 
+  <div
+    id="employeeName"
+    class="nameBox">
 
-    <button
-      id="captureBtn"
-      onclick="registerFace()"
-      disabled>
-
-      CAPTURE & REGISTER FACE
-
-    </button>
-
-
-    <div id="status">
-
-      ⏳ Loading face recognition...
-
-    </div>
-
-
-    <div class="small">
-
-      Look directly at the camera and keep your face clearly visible.
-
-    </div>
+    Employee Name will appear here
 
   </div>
 
 
-  <!-- Hidden Apps Script response frame -->
+  <!-- CAMERA -->
 
-  <iframe
-    name="appsScriptFrame"
-    id="appsScriptFrame">
-  </iframe>
+  <video
+    id="video"
+    autoplay
+    muted
+    playsinline>
+  </video>
 
 
-  <!-- Hidden form -->
+  <!-- REGISTER -->
 
-  <form
-    id="registrationForm"
-    method="POST"
-    target="appsScriptFrame">
+  <button
+    id="captureBtn"
+    onclick="registerFace()"
+    disabled>
 
-    <input
-      type="hidden"
-      name="action"
-      value="registerEmployee">
+    CREATE FACE ID
 
+  </button>
 
-    <input
-      type="hidden"
-      name="employeeId"
-      id="formEmployeeId">
 
+  <!-- STATUS -->
 
-    <input
-      type="hidden"
-      name="employeeName"
-      id="formEmployeeName">
+  <div id="status">
 
+    ⏳ Loading face recognition...
 
-    <input
-      type="hidden"
-      name="descriptor"
-      id="formDescriptor">
+  </div>
 
-  </form>
 
+  <div class="small">
 
+    Enter Employee ID and look directly at the camera.
 
-  <script>
+  </div>
 
 
-    /* =========================================
-       APPS SCRIPT URL
-       ========================================= */
+  <!-- CLOSE -->
 
-    const APPS_SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbwVkeLVCtXD9GW42p9V7BZ-ST6p60LfrD6koc4p8D4u035hKaoB7dgFSUNG_XidBOfi/exec";
+  <button
+    id="closeBtn"
+    class="closeBtn hidden"
+    onclick="closePage()">
 
+    CLOSE
 
-    /* =========================================
-       FACE MODEL URL
-       ========================================= */
+  </button>
 
-    const MODEL_URL =
-      "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
+</div>
 
 
-    let cameraStream = null;
+<!-- Hidden iframe -->
 
+<iframe
+  name="appsScriptFrame"
+  id="appsScriptFrame"
+  style="display:none;">
+</iframe>
 
 
-    /* =========================================
-       LOAD FACE MODELS
-       ========================================= */
+<!-- Hidden form -->
 
-    async function loadFaceModels() {
+<form
+  id="registrationForm"
+  method="POST"
+  target="appsScriptFrame">
 
-      const status =
-        document.getElementById("status");
+  <input
+    type="hidden"
+    name="action"
+    value="registerEmployee">
 
+  <input
+    type="hidden"
+    name="employeeId"
+    id="formEmployeeId">
 
-      try {
+  <input
+    type="hidden"
+    name="descriptor"
+    id="formDescriptor">
 
-        status.innerHTML =
-          "⏳ Loading face recognition...";
+</form>
 
 
-        await faceapi.nets.tinyFaceDetector.loadFromUri(
-          MODEL_URL
-        );
+<script>
 
 
-        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
-          MODEL_URL
-        );
+/* =========================================
+   APPS SCRIPT URL
+========================================= */
 
+const APPS_SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbwVkeLVCtXD9GW42p9V7BZ-ST6p60LfrD6koc4p8D4u035hKaoB7dgFSUNG_XidBOfi/exec";
 
-        await faceapi.nets.faceRecognitionNet.loadFromUri(
-          MODEL_URL
-        );
 
+/* =========================================
+   FACE MODEL URL
+========================================= */
 
-        status.innerHTML =
-          "📷 Starting camera...";
+const MODEL_URL =
+"https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
 
 
-        await startCamera();
+let cameraStream = null;
 
+let employeeFound = false;
 
-      } catch (error) {
+let currentEmployeeName = "";
 
-        console.error(error);
 
+/* =========================================
+   LOAD MODELS
+========================================= */
 
-        status.innerHTML =
-          "❌ Face recognition loading failed.<br>" +
-          error.message;
+async function loadFaceModels() {
 
-      }
+  const status =
+    document.getElementById("status");
 
-    }
 
+  try {
 
+    status.innerHTML =
+      "⏳ Loading face recognition...";
 
-    /* =========================================
-       START CAMERA
-       ========================================= */
 
-    async function startCamera() {
+    await faceapi.nets.tinyFaceDetector.loadFromUri(
+      MODEL_URL
+    );
 
-      const status =
-        document.getElementById("status");
 
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
+      MODEL_URL
+    );
 
-      try {
 
-        cameraStream =
-          await navigator.mediaDevices.getUserMedia({
+    await faceapi.nets.faceRecognitionNet.loadFromUri(
+      MODEL_URL
+    );
 
-            video: {
 
-              facingMode: "user",
+    status.innerHTML =
+      "📷 Starting camera...";
 
-              width: {
-                ideal: 640
-              },
 
-              height: {
-                ideal: 480
-              }
+    await startCamera();
 
-            },
 
-            audio: false
+  } catch (error) {
 
-          });
+    console.error(error);
 
+    status.innerHTML =
+      "❌ Face recognition loading failed.<br>" +
+      error.message;
 
-        const video =
-          document.getElementById("video");
+  }
 
+}
 
-        video.srcObject =
-          cameraStream;
 
+/* =========================================
+   START CAMERA
+========================================= */
 
-        document.getElementById(
-          "captureBtn"
-        ).disabled = false;
+async function startCamera() {
 
+  const status =
+    document.getElementById("status");
 
-        status.innerHTML =
-          "✅ Camera ready.<br>" +
-          "Look directly at the camera.";
 
+  try {
 
-      } catch (error) {
+    cameraStream =
+      await navigator.mediaDevices.getUserMedia({
 
-        console.error(error);
+        video: {
 
+          facingMode: "user",
 
-        status.innerHTML =
-          "❌ Camera permission required.<br>" +
-          error.message;
+          width: {
+            ideal: 640
+          },
 
-      }
+          height: {
+            ideal: 480
+          }
 
-    }
+        },
 
+        audio: false
 
+      });
 
-    /* =========================================
-       REGISTER FACE
-       ========================================= */
 
-    async function registerFace() {
+    const video =
+      document.getElementById("video");
 
-      const employeeId =
-        document.getElementById(
-          "employeeId"
-        ).value.trim();
 
+    video.srcObject =
+      cameraStream;
 
-      const employeeName =
-        document.getElementById(
-          "employeeName"
-        ).value.trim();
 
+    document.getElementById(
+      "captureBtn"
+    ).disabled = false;
 
-      const status =
-        document.getElementById(
-          "status"
-        );
 
+    status.innerHTML =
+      "✅ Camera ready.<br>" +
+      "Enter Employee ID.";
 
-      const button =
-        document.getElementById(
-          "captureBtn"
-        );
 
+  } catch (error) {
 
-      /* Check employee details */
+    console.error(error);
 
-      if (
-        !employeeId ||
-        !employeeName
-      ) {
+    status.innerHTML =
+      "❌ Camera permission required.<br>" +
+      error.message;
 
-        status.innerHTML =
-          "⚠️ Enter Employee ID and Employee Name.";
+  }
 
-        return;
+}
 
-      }
 
+/* =========================================
+   GET EMPLOYEE NAME
+========================================= */
 
-      button.disabled = true;
+async function getEmployeeName() {
 
-      button.innerText =
-        "SCANNING...";
+  const employeeId =
+    document
+      .getElementById("employeeId")
+      .value
+      .trim()
+      .toUpperCase();
+
+
+  const nameBox =
+    document.getElementById("employeeName");
+
+
+  const status =
+    document.getElementById("status");
+
+
+  if (!employeeId) {
+
+    employeeFound = false;
+
+    currentEmployeeName = "";
+
+    nameBox.innerText =
+      "Employee Name will appear here";
+
+    return;
+
+  }
+
+
+  status.innerHTML =
+    "🔍 Checking Employee ID...";
+
+
+  employeeFound = false;
+
+  currentEmployeeName = "";
+
+
+  try {
+
+    /*
+      We use a simple GET request
+      to Apps Script to find the employee.
+    */
+
+    const response =
+      await fetch(
+        APPS_SCRIPT_URL +
+        "?action=getEmployee&employeeId=" +
+        encodeURIComponent(employeeId)
+      );
+
+
+    const result =
+      await response.json();
+
+
+    if (result.success) {
+
+      employeeFound = true;
+
+      currentEmployeeName =
+        result.employeeName;
+
+
+      nameBox.innerText =
+        "Employee Name: " +
+        result.employeeName;
 
 
       status.innerHTML =
-        "📷 Detecting face...";
+        "✅ Employee found.<br>" +
+        "You can create Face ID.";
+
+    } else {
+
+      employeeFound = false;
+
+      currentEmployeeName = "";
+
+      nameBox.innerText =
+        "❌ Employee not found";
 
 
-      try {
-
-        const video =
-          document.getElementById(
-            "video"
-          );
-
-
-        /* Detect face */
-
-        const detection =
-          await faceapi
-            .detectSingleFace(
-
-              video,
-
-              new faceapi.TinyFaceDetectorOptions({
-
-                inputSize: 320,
-
-                scoreThreshold: 0.5
-
-              })
-
-            )
-            .withFaceLandmarks(true)
-            .withFaceDescriptor();
-
-
-        /* Face not detected */
-
-        if (!detection) {
-
-          status.innerHTML =
-            "❌ Face not detected.<br>" +
-            "Keep your face clearly visible and try again.";
-
-
-          button.disabled = false;
-
-          button.innerText =
-            "CAPTURE & REGISTER FACE";
-
-
-          return;
-
-        }
-
-
-        /* Create face descriptor */
-
-        const descriptor =
-          Array.from(
-            detection.descriptor
-          );
-
-
-        status.innerHTML =
-          "✅ Face detected.<br>" +
-          "💾 Saving employee...";
-
-
-        /* Fill hidden form */
-
-        document.getElementById(
-          "formEmployeeId"
-        ).value =
-          employeeId;
-
-
-        document.getElementById(
-          "formEmployeeName"
-        ).value =
-          employeeName;
-
-
-        document.getElementById(
-          "formDescriptor"
-        ).value =
-          JSON.stringify(
-            descriptor
-          );
-
-
-        /* Get form */
-
-        const form =
-          document.getElementById(
-            "registrationForm"
-          );
-
-
-        /* Set Apps Script URL */
-
-        form.action =
-          APPS_SCRIPT_URL;
-
-
-        button.innerText =
-          "SAVING...";
-
-
-        /* Send data to Apps Script */
-
-        form.submit();
-
-
-      } catch (error) {
-
-        console.error(error);
-
-
-        status.innerHTML =
-          "❌ Face processing error.<br>" +
-          error.message;
-
-
-        button.disabled = false;
-
-        button.innerText =
-          "CAPTURE & REGISTER FACE";
-
-      }
+      status.innerHTML =
+        "❌ " +
+        result.message;
 
     }
 
 
+  } catch (error) {
 
-    /* =========================================
-       RECEIVE APPS SCRIPT RESPONSE
-       ========================================= */
+    console.error(error);
 
-    window.addEventListener(
-      "message",
-      function(event) {
+    /*
+      Do not block face registration
+      if name lookup fails.
+    */
 
+    status.innerHTML =
+      "⚠️ Unable to verify Employee ID.";
 
-        if (
-          !event.data ||
-          event.data.type !==
-          "FACE_REGISTRATION_RESULT"
-        ) {
+  }
 
-          return;
-
-        }
+}
 
 
-        const result =
-          event.data;
+/* =========================================
+   EMPLOYEE ID CHANGE
+========================================= */
+
+document
+  .getElementById("employeeId")
+  .addEventListener(
+    "input",
+    function() {
+
+      this.value =
+        this.value.toUpperCase();
+
+      clearTimeout(
+        window.employeeTimer
+      );
+
+      window.employeeTimer =
+        setTimeout(
+          getEmployeeName,
+          500
+        );
+
+    }
+  );
 
 
-        const status =
-          document.getElementById(
-            "status"
+/* =========================================
+   REGISTER FACE
+========================================= */
+
+async function registerFace() {
+
+  const employeeId =
+    document
+      .getElementById("employeeId")
+      .value
+      .trim()
+      .toUpperCase();
+
+
+  const status =
+    document.getElementById("status");
+
+
+  const button =
+    document.getElementById("captureBtn");
+
+
+  if (!employeeId) {
+
+    status.innerHTML =
+      "⚠️ Enter Employee ID.";
+
+    return;
+
+  }
+
+
+  button.disabled = true;
+
+  button.innerText =
+    "SCANNING...";
+
+
+  status.innerHTML =
+    "📷 Detecting face...";
+
+
+  try {
+
+    const video =
+      document.getElementById("video");
+
+
+    const detection =
+      await faceapi
+        .detectSingleFace(
+
+          video,
+
+          new faceapi.TinyFaceDetectorOptions({
+
+            inputSize: 320,
+
+            scoreThreshold: 0.5
+
+          })
+
+        )
+        .withFaceLandmarks(true)
+        .withFaceDescriptor();
+
+
+    if (!detection) {
+
+      status.innerHTML =
+        "❌ Face not detected.<br>" +
+        "Keep your face clearly visible.";
+
+      button.disabled = false;
+
+      button.innerText =
+        "CREATE FACE ID";
+
+      return;
+
+    }
+
+
+    const descriptor =
+      Array.from(
+        detection.descriptor
+      );
+
+
+    status.innerHTML =
+      "✅ Face detected.<br>" +
+      "💾 Saving Face ID...";
+
+
+    /* Fill form */
+
+    document.getElementById(
+      "formEmployeeId"
+    ).value =
+      employeeId;
+
+
+    document.getElementById(
+      "formDescriptor"
+    ).value =
+      JSON.stringify(descriptor);
+
+
+    const form =
+      document.getElementById(
+        "registrationForm"
+      );
+
+
+    form.action =
+      APPS_SCRIPT_URL;
+
+
+    button.innerText =
+      "SAVING...";
+
+
+    form.submit();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    status.innerHTML =
+      "❌ Face processing error.<br>" +
+      error.message;
+
+
+    button.disabled = false;
+
+    button.innerText =
+      "CREATE FACE ID";
+
+  }
+
+}
+
+
+/* =========================================
+   APPS SCRIPT RESPONSE
+========================================= */
+
+window.addEventListener(
+  "message",
+  function(event) {
+
+
+    if (
+      !event.data ||
+      event.data.type !==
+      "FACE_REGISTRATION_RESULT"
+    ) {
+
+      return;
+
+    }
+
+
+    const result =
+      event.data;
+
+
+    const status =
+      document.getElementById("status");
+
+
+    const button =
+      document.getElementById("captureBtn");
+
+
+    const closeBtn =
+      document.getElementById("closeBtn");
+
+
+    /* SUCCESS */
+
+    if (result.success) {
+
+      status.className =
+        "success";
+
+
+      status.innerHTML =
+        "✅ <b>FACE ID CREATED SUCCESSFULLY!</b><br><br>" +
+
+        "Employee: " +
+        result.employeeName +
+
+        "<br>" +
+
+        "Employee ID: " +
+        result.employeeId;
+
+
+      button.innerText =
+        "REGISTERED";
+
+
+      button.disabled =
+        true;
+
+
+      closeBtn.classList.remove(
+        "hidden"
+      );
+
+
+      if (cameraStream) {
+
+        cameraStream
+          .getTracks()
+          .forEach(
+            track =>
+              track.stop()
           );
-
-
-        const button =
-          document.getElementById(
-            "captureBtn"
-          );
-
-
-        /* SUCCESS */
-
-        if (result.success) {
-
-          status.innerHTML =
-            "✅ <b>Employee Registered Successfully!</b><br><br>" +
-
-            "Employee: " +
-            result.employeeName +
-
-            "<br>" +
-
-            "ID: " +
-            result.employeeId;
-
-
-          button.innerText =
-            "REGISTERED";
-
-
-          button.disabled = true;
-
-
-        }
-
-
-        /* ERROR */
-
-        else {
-
-          status.innerHTML =
-            "❌ " +
-            result.message;
-
-
-          button.disabled = false;
-
-
-          button.innerText =
-            "CAPTURE & REGISTER FACE";
-
-        }
 
       }
-    );
 
 
+      /*
+        Try to close the window
+        if browser allows it.
+      */
 
-    /* =========================================
-       START APPLICATION
-       ========================================= */
+      setTimeout(
+        function() {
 
-    window.addEventListener(
-      "load",
-      loadFaceModels
-    );
+          window.close();
+
+        },
+        2000
+      );
 
 
-  </script>
+      return;
+
+    }
+
+
+    /* ALREADY REGISTERED */
+
+    if (result.alreadyRegistered) {
+
+      status.className =
+        "error";
+
+
+      status.innerHTML =
+        "❌ <b>FACE ALREADY REGISTERED</b><br><br>" +
+        result.message;
+
+
+      button.disabled =
+        false;
+
+
+      button.innerText =
+        "CREATE FACE ID";
+
+
+      closeBtn.classList.remove(
+        "hidden"
+      );
+
+
+      return;
+
+    }
+
+
+    /* DUPLICATE FACE */
+
+    if (result.duplicateFace) {
+
+      status.className =
+        "error";
+
+
+      status.innerHTML =
+        "❌ <b>FACE ALREADY EXISTS</b><br><br>" +
+        result.message;
+
+
+      button.disabled =
+        false;
+
+
+      button.innerText =
+        "CREATE FACE ID";
+
+
+      closeBtn.classList.remove(
+        "hidden"
+      );
+
+
+      return;
+
+    }
+
+
+    /* OTHER ERROR */
+
+    status.className =
+      "error";
+
+
+    status.innerHTML =
+      "❌ " +
+      result.message;
+
+
+    button.disabled =
+      false;
+
+
+    button.innerText =
+      "CREATE FACE ID";
+
+  }
+);
+
+
+/* =========================================
+   CLOSE PAGE
+========================================= */
+
+function closePage() {
+
+  if (cameraStream) {
+
+    cameraStream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+  }
+
+
+  window.close();
+
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+window.addEventListener(
+  "load",
+  loadFaceModels
+);
+
+</script>
 
 </body>
 
