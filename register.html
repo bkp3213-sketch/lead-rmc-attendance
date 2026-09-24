@@ -291,7 +291,7 @@ CLOSE
 <form
   id="registrationForm"
   method="POST"
-  target="appsScriptFrame">
+  target="_blank">
 
 <input
   type="hidden"
@@ -686,200 +686,21 @@ async function registerFace() {
       JSON.stringify(descriptor);
 
 
+    button.innerText = "SAVING...";
+
     const form =
       document.getElementById(
         "registrationForm"
       );
 
-
     form.action =
       APPS_SCRIPT_URL;
 
+    form.submit();
 
-    button.innerText =
-      "SAVING...";
 
 
-    /*
-      IMPORTANT:
-      Submit after all values are ready.
-    */
 
-    setTimeout(function() {
-
-      form.submit();
-
-    }, 100);
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    status.innerHTML =
-      "❌ Face processing error.<br>" +
-      error.message;
-
-    button.disabled = false;
-
-    button.innerText =
-      "CREATE FACE ID";
-  }
-}
-
-
-/* =========================================
-   APPS SCRIPT RESPONSE
-========================================= */
-
-window.addEventListener(
-  "message",
-  function(event) {
-
-    if (
-      !event.data ||
-      event.data.type !==
-      "FACE_REGISTRATION_RESULT"
-    ) {
-      return;
-    }
-
-
-    const result =
-      event.data;
-
-
-    const status =
-      document.getElementById("status");
-
-
-    const button =
-      document.getElementById("captureBtn");
-
-
-    const closeBtn =
-      document.getElementById("closeBtn");
-
-
-    /* SUCCESS */
-
-    if (result.success) {
-
-      status.className =
-        "success";
-
-
-      status.innerHTML =
-        "✅ <b>FACE ID CREATED SUCCESSFULLY!</b><br><br>" +
-
-        "Employee: " +
-        result.employeeName +
-
-        "<br>" +
-
-        "Employee ID: " +
-        result.employeeId;
-
-
-      button.innerText =
-        "REGISTERED";
-
-
-      button.disabled = true;
-
-
-      closeBtn.classList.remove(
-        "hidden"
-      );
-
-
-      if (cameraStream) {
-
-        cameraStream
-          .getTracks()
-          .forEach(
-            track =>
-              track.stop()
-          );
-      }
-
-
-      return;
-    }
-
-
-    /* ALREADY REGISTERED */
-
-    if (result.alreadyRegistered) {
-
-      status.className =
-        "error";
-
-
-      status.innerHTML =
-        "❌ <b>FACE ALREADY REGISTERED</b><br><br>" +
-        result.message;
-
-
-      button.disabled = false;
-
-      button.innerText =
-        "CREATE FACE ID";
-
-
-      closeBtn.classList.remove(
-        "hidden"
-      );
-
-      return;
-    }
-
-
-    /* DUPLICATE FACE */
-
-    if (result.duplicateFace) {
-
-      status.className =
-        "error";
-
-
-      status.innerHTML =
-        "❌ <b>FACE ALREADY EXISTS</b><br><br>" +
-        result.message;
-
-
-      button.disabled = false;
-
-      button.innerText =
-        "CREATE FACE ID";
-
-
-      closeBtn.classList.remove(
-        "hidden"
-      );
-
-      return;
-    }
-
-
-    /* OTHER ERROR */
-
-    status.className =
-      "error";
-
-
-    status.innerHTML =
-      "❌ " +
-      result.message;
-
-
-    button.disabled = false;
-
-    button.innerText =
-      "CREATE FACE ID";
-
-  }
-);
 
 
 /* =========================================
