@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 
 <meta name="viewport"
@@ -10,7 +9,8 @@
 
 <title>LEAD RMC - Face Registration</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<!-- Face API -->
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.js"></script>
 
 <style>
 
@@ -23,26 +23,19 @@ body {
   margin: 0;
   min-height: 100vh;
   background: #f4f6f8;
-
   display: flex;
   justify-content: center;
   align-items: center;
-
   padding: 20px;
 }
 
 .card {
   width: 100%;
   max-width: 430px;
-
   background: white;
-
   padding: 25px;
-
   border-radius: 20px;
-
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-
   text-align: center;
 }
 
@@ -54,37 +47,26 @@ h1 {
 
 .subtitle {
   color: #777;
-
   margin-top: 6px;
   margin-bottom: 20px;
-
   font-size: 17px;
 }
 
 label {
   display: block;
   text-align: left;
-
   font-weight: bold;
-
   margin-bottom: 6px;
 }
 
 input {
   width: 100%;
-
   padding: 14px;
-
   margin-bottom: 10px;
-
   border: 1px solid #ddd;
-
   border-radius: 10px;
-
   font-size: 16px;
-
   outline: none;
-
   text-transform: uppercase;
 }
 
@@ -94,56 +76,36 @@ input:focus {
 
 .nameBox {
   width: 100%;
-
   padding: 14px;
-
   margin-bottom: 12px;
-
   background: #f1f3f5;
-
   border: 1px solid #ddd;
-
   border-radius: 10px;
-
   font-size: 16px;
-
   text-align: left;
-
   color: #555;
 }
 
 video {
   width: 100%;
-
   margin-top: 8px;
-
   border-radius: 15px;
-
   background: #111;
-
   transform: scaleX(-1);
-
   display: block;
 }
 
 button {
   width: 100%;
-
   padding: 15px;
-
   margin-top: 15px;
-
   border: none;
-
   border-radius: 10px;
-
   background: #1976d2;
-
   color: white;
-
   font-size: 16px;
-
   font-weight: bold;
+  cursor: pointer;
 }
 
 button:disabled {
@@ -156,9 +118,7 @@ button:disabled {
 
 #status {
   margin-top: 16px;
-
   line-height: 1.5;
-
   font-size: 15px;
 }
 
@@ -176,9 +136,7 @@ button:disabled {
 
 .small {
   margin-top: 12px;
-
   font-size: 13px;
-
   color: #777;
 }
 
@@ -187,145 +145,115 @@ iframe {
 }
 
 </style>
-
 </head>
-
 
 <body>
 
 <div class="card">
 
-<h1>LEAD RMC</h1>
+  <h1>LEAD RMC</h1>
 
-<div class="subtitle">
-Employee Face Registration
-</div>
+  <div class="subtitle">
+    Employee Face Registration
+  </div>
 
+  <!-- EMPLOYEE ID -->
+  <label for="employeeId">
+    Employee ID
+  </label>
 
-<!-- EMPLOYEE ID -->
+  <input
+    type="text"
+    id="employeeId"
+    placeholder="Enter Employee ID"
+    autocomplete="off">
 
-<label for="employeeId">
-Employee ID
-</label>
+  <!-- EMPLOYEE NAME -->
+  <div id="employeeName" class="nameBox">
+    Employee Name will appear here
+  </div>
 
-<input
-  type="text"
-  id="employeeId"
-  placeholder="Enter Employee ID"
-  autocomplete="off">
+  <!-- CAMERA -->
+  <video
+    id="video"
+    autoplay
+    muted
+    playsinline>
+  </video>
 
+  <!-- REGISTER BUTTON -->
+  <button
+    id="captureBtn"
+    onclick="registerFace()"
+    disabled>
+    CREATE FACE ID
+  </button>
 
-<!-- EMPLOYEE NAME -->
+  <!-- STATUS -->
+  <div id="status">
+    ⏳ Loading face recognition...
+  </div>
 
-<div
-  id="employeeName"
-  class="nameBox">
+  <div class="small">
+    Enter Employee ID and look directly at the camera.
+  </div>
 
-Employee Name will appear here
-
-</div>
-
-
-<!-- CAMERA -->
-
-<video
-  id="video"
-  autoplay
-  muted
-  playsinline>
-</video>
-
-
-<!-- REGISTER BUTTON -->
-
-<button
-  id="captureBtn"
-  onclick="registerFace()"
-  disabled>
-
-CREATE FACE ID
-
-</button>
-
-
-<!-- STATUS -->
-
-<div id="status">
-
-⏳ Loading face recognition...
+  <!-- CLOSE BUTTON -->
+  <button
+    id="closeBtn"
+    class="closeBtn hidden"
+    onclick="closePage()">
+    CLOSE
+  </button>
 
 </div>
-
-
-<div class="small">
-
-Enter Employee ID and look directly at the camera.
-
-</div>
-
-
-<!-- CLOSE BUTTON -->
-
-<button
-  id="closeBtn"
-  class="closeBtn hidden"
-  onclick="closePage()">
-
-CLOSE
-
-</button>
-
-</div>
-
 
 <!-- HIDDEN IFRAME -->
-
 <iframe
   name="appsScriptFrame"
   id="appsScriptFrame">
 </iframe>
 
-
 <!-- HIDDEN FORM -->
-
 <form
   id="registrationForm"
   method="POST"
   target="_blank">
 
-<input
-  type="hidden"
-  name="action"
-  value="registerEmployee">
+  <input
+    type="hidden"
+    name="action"
+    value="registerEmployee">
 
-<input
-  type="hidden"
-  name="employeeId"
-  id="formEmployeeId">
+  <input
+    type="hidden"
+    name="employeeId"
+    id="formEmployeeId">
 
-<input
-  type="hidden"
-  name="descriptor"
-  id="formDescriptor">
+  <input
+    type="hidden"
+    name="descriptor"
+    id="formDescriptor">
 
 </form>
 
-
 <script>
-
 
 const APPS_SCRIPT_URL =
 "https://script.google.com/macros/s/AKfycbwVkeLVCtXD9GW42p9V7BZ-ST6p60LfrD6koc4p8D4u035hKaoB7dgFSUNG_XidBOfi/exec";
 
-
-const MODEL_URL =
-"https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
-
+/*
+  Two model sources.
+  If jsDelivr does not load on mobile, the page automatically
+  tries UNPKG.
+*/
+const MODEL_URLS = [
+  "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/model/",
+  "https://unpkg.com/@vladmandic/face-api@1.7.15/model/"
+];
 
 let cameraStream = null;
-
 let employeeFound = false;
-
 let currentEmployeeName = "";
 
 
@@ -333,47 +261,106 @@ let currentEmployeeName = "";
    LOAD FACE MODELS
 ========================================= */
 
+function withTimeout(promise, milliseconds) {
+
+  const timeout = new Promise((_, reject) => {
+
+    setTimeout(() => {
+      reject(
+        new Error("Model loading timed out")
+      );
+    }, milliseconds);
+
+  });
+
+  return Promise.race([
+    promise,
+    timeout
+  ]);
+}
+
+
+async function loadModelsFrom(url) {
+
+  await withTimeout(
+    faceapi.nets.tinyFaceDetector.loadFromUri(url),
+    15000
+  );
+
+  await withTimeout(
+    faceapi.nets.faceLandmark68TinyNet.loadFromUri(url),
+    15000
+  );
+
+  await withTimeout(
+    faceapi.nets.faceRecognitionNet.loadFromUri(url),
+    20000
+  );
+}
+
+
 async function loadFaceModels() {
 
   const status =
     document.getElementById("status");
 
-  try {
+  let loaded = false;
+  let lastError = null;
 
-    status.innerHTML =
-      "⏳ Loading face recognition...";
+  for (let i = 0; i < MODEL_URLS.length; i++) {
 
+    try {
 
-    await faceapi.nets.tinyFaceDetector.loadFromUri(
-      MODEL_URL
-    );
+      if (i === 0) {
 
+        status.innerHTML =
+          "⏳ Loading face detector...";
 
-    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
-      MODEL_URL
-    );
+      } else {
 
-
-    await faceapi.nets.faceRecognitionNet.loadFromUri(
-      MODEL_URL
-    );
+        status.innerHTML =
+          "🔄 Trying alternate face model server...";
+      }
 
 
-    status.innerHTML =
-      "📷 Starting camera...";
+      await loadModelsFrom(
+        MODEL_URLS[i]
+      );
 
+      loaded = true;
+      break;
 
-    await startCamera();
+    } catch (error) {
 
+      console.error(
+        "Model source failed:",
+        MODEL_URLS[i],
+        error
+      );
 
-  } catch (error) {
-
-    console.error(error);
-
-    status.innerHTML =
-      "❌ Face recognition loading failed.<br>" +
-      error.message;
+      lastError = error;
+    }
   }
+
+
+  if (!loaded) {
+
+    console.error(lastError);
+
+    status.innerHTML =
+      "❌ Face recognition could not be loaded.<br>" +
+      "Please check your internet connection and reload the page.";
+
+    return;
+  }
+
+
+  status.innerHTML =
+    "📷 Starting camera...";
+
+
+  await startCamera();
+
 }
 
 
@@ -387,6 +374,15 @@ async function startCamera() {
     document.getElementById("status");
 
   try {
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+
+      throw new Error(
+        "Camera is not supported by this browser."
+      );
+    }
+
 
     cameraStream =
       await navigator.mediaDevices.getUserMedia({
@@ -414,6 +410,9 @@ async function startCamera() {
 
     video.srcObject =
       cameraStream;
+
+
+    await video.play();
 
 
     document.getElementById(
@@ -686,21 +685,41 @@ async function registerFace() {
       JSON.stringify(descriptor);
 
 
-    button.innerText = "SAVING...";
+    button.innerText =
+      "SAVING...";
+
 
     const form =
       document.getElementById(
         "registrationForm"
       );
 
+
     form.action =
       APPS_SCRIPT_URL;
 
+
+    /*
+      target="_blank" opens the Apps Script
+      success/failure page in a new tab.
+    */
     form.submit();
 
 
+  } catch (error) {
 
+    console.error(error);
 
+    status.innerHTML =
+      "❌ Face registration failed.<br>" +
+      error.message;
+
+    button.disabled = false;
+
+    button.innerText =
+      "CREATE FACE ID";
+  }
+}
 
 
 /* =========================================
@@ -737,5 +756,4 @@ window.addEventListener(
 </script>
 
 </body>
-
 </html>
