@@ -280,9 +280,7 @@ async function captureDescriptor() {
     .withFaceDescriptor();
 
   if (!detection) {
-    throw new Error(
-      "Face not detected. Keep your face clearly visible and look at the camera."
-    );
+    return null;
   }
 
   return Array.from(detection.descriptor);
@@ -317,6 +315,13 @@ async function verifyFace(descriptor) {
   return await postData({
     action: "verifyFace",
     descriptor: JSON.stringify(descriptor)
+  });
+}
+
+async function getTodayAttendance(employeeId) {
+  return await postData({
+    action: "getTodayAttendance",
+    employeeId: employeeId
   });
 }
 
@@ -361,8 +366,35 @@ async function markAttendance(action) {
   const actionName = action === "checkIn" ? "Check In" : "Check Out";
 
   try {
-    setStatus("📷 Scanning face...");
-    const descriptor = await captureDescriptor();
+    setStatus("📷 Scanning face...<br><br><b>🙂 Please bring your face in front of the camera.</b>");
+
+    let descriptor = null;
+
+    // Do not count an attempt when no face is visible.
+    // Wait until a face comes in front of the camera.
+    for (let i = 0; i < 20; i++) {
+      descriptor = await captureDescriptor();
+
+      if (descriptor) {
+        break;
+      }
+
+      setStatus(
+        "📷 <b>Face not detected</b><br><br>" +
+        "🙂 Please bring your face in front of the camera."
+      );
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    if (!descriptor) {
+      setStatus(
+        "📷 <b>Face not detected</b><br><br>" +
+        "🙂 Please bring your face in front of the camera and try again.",
+        "error"
+      );
+      return;
+    }
 
     setStatus("🔍 Verifying face...");
     const faceResult = await verifyFace(descriptor);
@@ -398,10 +430,43 @@ async function markAttendance(action) {
     faceAttempts = 0;
     document.getElementById("manualBtn").style.display = "none";
 
+    // Decide Check-In / Check-Out automatically from today's attendance
     setStatus(
       "✅ Face verified.<br>" +
       "<b>" + escapeHtml(faceResult.employeeName) + "</b><br>" +
-      "📍 Checking office location..."
+      "🔎 Checking today's attendance status..."
+    );
+
+    const attendanceStatus = await getTodayAttendance(faceResult.employeeId);
+
+    if (!attendanceStatus.success) {
+      throw new Error(attendanceStatus.message || "Unable to check today's attendance status.");
+    }
+
+    let action;
+    let actionName;
+
+    if (!attendanceStatus.checkedIn) {
+      action = "checkIn";
+      actionName = "Check In";
+    } else if (!attendanceStatus.checkedOut) {
+      action = "checkOut";
+      actionName = "Check Out";
+    } else {
+      setStatus(
+        "ℹ️ <b>Attendance already completed for today.</b><br><br>" +
+        "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
+        "You have already checked in and checked out today.",
+        "success"
+      );
+      return;
+    }
+
+    setStatus(
+      "✅ Face verified.<br>" +
+      "<b>" + escapeHtml(faceResult.employeeName) + "</b><br>" +
+      "📍 Checking office location...<br>" +
+      "➡️ Auto " + actionName + " selected."
     );
 
     const position = await getLocation();
@@ -468,8 +533,8 @@ async function markAttendance(action) {
   } catch (error) {
     console.error(error);
 
-    // Face detection errors also count as failed attempts.
-    faceAttempts++;
+    // Only actual face verification errors count as attempts.
+    // A missing face is handled before verification and does not count.
 
     if (faceAttempts >= MAX_FACE_ATTEMPTS) {
       document.getElementById("manualBtn").style.display = "block";
