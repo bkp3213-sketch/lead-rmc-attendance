@@ -1,16 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEAD RMC Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEAD RMC Attendance</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background: #f4f6f8;
+    }
+
+    video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 15px;
+      background: #000;
+      margin-top: 20px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 10px;
+      background: #1976d2;
+      color: white;
+      font-size: 17px;
+    }
+
+    #status {
+      margin-top: 15px;
+    }
+  </style>
 </head>
 
 <body>
 
-    <h1>LEAD RMC</h1>
-    <h2>Attendance Management</h2>
+  <h1>LEAD RMC</h1>
+  <h2>Attendance</h2>
 
-    <p>Camera & Face Verification System</p>
+  <button onclick="startCamera()">
+    📷 START CAMERA
+  </button>
+
+  <br>
+
+  <video id="camera" autoplay playsinline></video>
+
+  <div id="status">
+    Camera not started
+  </div>
+
+
+<script>
+
+async function startCamera() {
+
+  const status =
+    document.getElementById("status");
+
+  const video =
+    document.getElementById("camera");
+
+  try {
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user"
+        },
+        audio: false
+      });
+
+    video.srcObject = stream;
+
+    status.innerHTML =
+      "✅ Camera working!";
+
+  } catch (error) {
+
+    status.innerHTML =
+      "❌ Camera Error: " + error.message;
+
+  }
+
+}
+
+</script>
 
 </body>
 </html>
