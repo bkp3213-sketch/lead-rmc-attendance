@@ -191,6 +191,10 @@ let cameraStream = null;
 let appReady = false;
 let busy = false;
 
+// Face verification attempts
+let faceAttempts = 0;
+const MAX_FACE_ATTEMPTS = 3;
+
 const statusEl = document.getElementById("status");
 const checkInBtn = document.getElementById("checkInBtn");
 const checkOutBtn = document.getElementById("checkOutBtn");
@@ -364,16 +368,35 @@ async function markAttendance(action) {
     const faceResult = await verifyFace(descriptor);
 
     if (!faceResult.success) {
-      setStatus(
-        "❌ <b>Face verification failed</b><br>" +
-        escapeHtml(faceResult.message || "Face not recognised.") +
-        "<br><br>Use the <b>MANUAL VERIFICATION</b> button below.",
-        "error"
-      );
+      faceAttempts++;
 
-      document.getElementById("manualBtn").style.display = "block";
+      if (faceAttempts < MAX_FACE_ATTEMPTS) {
+        const remaining = MAX_FACE_ATTEMPTS - faceAttempts;
+
+        setStatus(
+          "❌ <b>Face verification failed</b><br>" +
+          escapeHtml(faceResult.message || "Face not recognised.") +
+          "<br><br>🔄 Please try again." +
+          "<br><b>Attempt " + faceAttempts + " of " + MAX_FACE_ATTEMPTS + "</b>" +
+          "<br>" + remaining + " attempt(s) remaining.",
+          "error"
+        );
+      } else {
+        setStatus(
+          "❌ <b>Face verification failed 3 times</b><br>" +
+          "You can now use Manual Verification.",
+          "error"
+        );
+
+        document.getElementById("manualBtn").style.display = "block";
+      }
+
       return;
     }
+
+    // Face verification successful - reset attempts
+    faceAttempts = 0;
+    document.getElementById("manualBtn").style.display = "none";
 
     setStatus(
       "✅ Face verified.<br>" +
@@ -445,13 +468,30 @@ async function markAttendance(action) {
   } catch (error) {
     console.error(error);
 
-    document.getElementById("manualBtn").style.display = "block";
+    // Face detection errors also count as failed attempts.
+    faceAttempts++;
 
-    setStatus(
-      "❌ " + escapeHtml(error.message) +
-      "<br><br>Use the <b>MANUAL VERIFICATION</b> button below.",
-      "error"
-    );
+    if (faceAttempts >= MAX_FACE_ATTEMPTS) {
+      document.getElementById("manualBtn").style.display = "block";
+
+      setStatus(
+        "❌ <b>Face verification failed 3 times</b><br>" +
+        escapeHtml(error.message) +
+        "<br><br>🆘 You can now use Manual Verification.",
+        "error"
+      );
+    } else {
+      const remaining = MAX_FACE_ATTEMPTS - faceAttempts;
+
+      setStatus(
+        "❌ <b>Face verification failed</b><br>" +
+        escapeHtml(error.message) +
+        "<br><br>🔄 Please try again." +
+        "<br><b>Attempt " + faceAttempts + " of " + MAX_FACE_ATTEMPTS + "</b>" +
+        "<br>" + remaining + " attempt(s) remaining.",
+        "error"
+      );
+    }
   } finally {
     busy = false;
 
@@ -464,6 +504,14 @@ async function markAttendance(action) {
 
 async function manualVerification() {
   if (busy) return;
+
+  if (faceAttempts < MAX_FACE_ATTEMPTS) {
+    setStatus(
+      "❌ Please try face verification 3 times first.",
+      "error"
+    );
+    return;
+  }
 
   const employeeId = prompt("Enter your Employee ID:");
 
