@@ -367,7 +367,7 @@ async function markAttendance(action) {
       setStatus(
         "❌ <b>Face verification failed</b><br>" +
         escapeHtml(faceResult.message || "Face not recognised.") +
-        "<br><br>If you are an employee, use Manual Verification.",
+        "<br><br>Use the <b>MANUAL VERIFICATION</b> button below.",
         "error"
       );
 
@@ -444,7 +444,14 @@ async function markAttendance(action) {
 
   } catch (error) {
     console.error(error);
-    setStatus("❌ " + escapeHtml(error.message), "error");
+
+    document.getElementById("manualBtn").style.display = "block";
+
+    setStatus(
+      "❌ " + escapeHtml(error.message) +
+      "<br><br>Use the <b>MANUAL VERIFICATION</b> button below.",
+      "error"
+    );
   } finally {
     busy = false;
 
