@@ -48,9 +48,7 @@ body {
 
 h1 {
   margin: 0;
-
   font-size: 30px;
-
   color: #111;
 }
 
@@ -65,7 +63,6 @@ h1 {
 
 label {
   display: block;
-
   text-align: left;
 
   font-weight: bold;
@@ -165,14 +162,6 @@ button:disabled {
   font-size: 15px;
 }
 
-.small {
-  margin-top: 12px;
-
-  font-size: 13px;
-
-  color: #777;
-}
-
 .success {
   color: #16803c;
 }
@@ -185,6 +174,18 @@ button:disabled {
   display: none;
 }
 
+.small {
+  margin-top: 12px;
+
+  font-size: 13px;
+
+  color: #777;
+}
+
+iframe {
+  display: none;
+}
+
 </style>
 
 </head>
@@ -194,119 +195,118 @@ button:disabled {
 
 <div class="card">
 
-  <h1>LEAD RMC</h1>
+<h1>LEAD RMC</h1>
 
-  <div class="subtitle">
-    Employee Face Registration
-  </div>
-
-
-  <!-- EMPLOYEE ID -->
-
-  <label for="employeeId">
-    Employee ID
-  </label>
-
-  <input
-    type="text"
-    id="employeeId"
-    placeholder="Enter Employee ID"
-    autocomplete="off">
+<div class="subtitle">
+Employee Face Registration
+</div>
 
 
-  <!-- EMPLOYEE NAME FROM SHEET -->
+<!-- EMPLOYEE ID -->
 
-  <div
-    id="employeeName"
-    class="nameBox">
+<label for="employeeId">
+Employee ID
+</label>
 
-    Employee Name will appear here
-
-  </div>
-
-
-  <!-- CAMERA -->
-
-  <video
-    id="video"
-    autoplay
-    muted
-    playsinline>
-  </video>
+<input
+  type="text"
+  id="employeeId"
+  placeholder="Enter Employee ID"
+  autocomplete="off">
 
 
-  <!-- REGISTER -->
+<!-- EMPLOYEE NAME -->
 
-  <button
-    id="captureBtn"
-    onclick="registerFace()"
-    disabled>
+<div
+  id="employeeName"
+  class="nameBox">
 
-    CREATE FACE ID
-
-  </button>
-
-
-  <!-- STATUS -->
-
-  <div id="status">
-
-    ⏳ Loading face recognition...
-
-  </div>
-
-
-  <div class="small">
-
-    Enter Employee ID and look directly at the camera.
-
-  </div>
-
-
-  <!-- CLOSE -->
-
-  <button
-    id="closeBtn"
-    class="closeBtn hidden"
-    onclick="closePage()">
-
-    CLOSE
-
-  </button>
+Employee Name will appear here
 
 </div>
 
 
-<!-- Hidden iframe -->
+<!-- CAMERA -->
+
+<video
+  id="video"
+  autoplay
+  muted
+  playsinline>
+</video>
+
+
+<!-- REGISTER BUTTON -->
+
+<button
+  id="captureBtn"
+  onclick="registerFace()"
+  disabled>
+
+CREATE FACE ID
+
+</button>
+
+
+<!-- STATUS -->
+
+<div id="status">
+
+⏳ Loading face recognition...
+
+</div>
+
+
+<div class="small">
+
+Enter Employee ID and look directly at the camera.
+
+</div>
+
+
+<!-- CLOSE BUTTON -->
+
+<button
+  id="closeBtn"
+  class="closeBtn hidden"
+  onclick="closePage()">
+
+CLOSE
+
+</button>
+
+</div>
+
+
+<!-- HIDDEN IFRAME -->
 
 <iframe
   name="appsScriptFrame"
-  id="appsScriptFrame"
-  style="display:none;">
+  id="appsScriptFrame">
 </iframe>
 
 
-<!-- Hidden form -->
+<!-- HIDDEN FORM -->
 
 <form
   id="registrationForm"
   method="POST"
   target="appsScriptFrame">
 
-  <input
-    type="hidden"
-    name="action"
-    value="registerEmployee">
+<input
+  type="hidden"
+  name="action"
+  value="registerEmployee">
 
-  <input
-    type="hidden"
-    name="employeeId"
-    id="formEmployeeId">
+<input
+  type="hidden"
+  name="employeeId"
+  id="formEmployeeId">
 
-  <input
-    type="hidden"
-    name="descriptor"
-    id="formDescriptor">
+<input
+  type="hidden"
+  name="descriptor"
+  id="formDescriptor">
 
 </form>
 
@@ -314,17 +314,9 @@ button:disabled {
 <script>
 
 
-/* =========================================
-   APPS SCRIPT URL
-========================================= */
-
 const APPS_SCRIPT_URL =
 "https://script.google.com/macros/s/AKfycbwVkeLVCtXD9GW42p9V7BZ-ST6p60LfrD6koc4p8D4u035hKaoB7dgFSUNG_XidBOfi/exec";
 
-
-/* =========================================
-   FACE MODEL URL
-========================================= */
 
 const MODEL_URL =
 "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
@@ -338,14 +330,13 @@ let currentEmployeeName = "";
 
 
 /* =========================================
-   LOAD MODELS
+   LOAD FACE MODELS
 ========================================= */
 
 async function loadFaceModels() {
 
   const status =
     document.getElementById("status");
-
 
   try {
 
@@ -382,9 +373,7 @@ async function loadFaceModels() {
     status.innerHTML =
       "❌ Face recognition loading failed.<br>" +
       error.message;
-
   }
-
 }
 
 
@@ -397,14 +386,12 @@ async function startCamera() {
   const status =
     document.getElementById("status");
 
-
   try {
 
     cameraStream =
       await navigator.mediaDevices.getUserMedia({
 
         video: {
-
           facingMode: "user",
 
           width: {
@@ -414,7 +401,6 @@ async function startCamera() {
           height: {
             ideal: 480
           }
-
         },
 
         audio: false
@@ -447,9 +433,7 @@ async function startCamera() {
     status.innerHTML =
       "❌ Camera permission required.<br>" +
       error.message;
-
   }
-
 }
 
 
@@ -485,7 +469,6 @@ async function getEmployeeName() {
       "Employee Name will appear here";
 
     return;
-
   }
 
 
@@ -499,11 +482,6 @@ async function getEmployeeName() {
 
 
   try {
-
-    /*
-      We use a simple GET request
-      to Apps Script to find the employee.
-    */
 
     const response =
       await fetch(
@@ -543,11 +521,9 @@ async function getEmployeeName() {
       nameBox.innerText =
         "❌ Employee not found";
 
-
       status.innerHTML =
         "❌ " +
         result.message;
-
     }
 
 
@@ -555,16 +531,16 @@ async function getEmployeeName() {
 
     console.error(error);
 
-    /*
-      Do not block face registration
-      if name lookup fails.
-    */
+    employeeFound = false;
+
+    currentEmployeeName = "";
+
+    nameBox.innerText =
+      "⚠️ Unable to verify Employee";
 
     status.innerHTML =
       "⚠️ Unable to verify Employee ID.";
-
   }
-
 }
 
 
@@ -590,7 +566,6 @@ document
           getEmployeeName,
           500
         );
-
     }
   );
 
@@ -623,7 +598,24 @@ async function registerFace() {
       "⚠️ Enter Employee ID.";
 
     return;
+  }
 
+
+  if (!employeeFound) {
+
+    status.innerHTML =
+      "❌ Employee ID not found.";
+
+    return;
+  }
+
+
+  if (!currentEmployeeName) {
+
+    status.innerHTML =
+      "❌ Employee name not found.";
+
+    return;
   }
 
 
@@ -646,17 +638,11 @@ async function registerFace() {
     const detection =
       await faceapi
         .detectSingleFace(
-
           video,
-
           new faceapi.TinyFaceDetectorOptions({
-
             inputSize: 320,
-
             scoreThreshold: 0.5
-
           })
-
         )
         .withFaceLandmarks(true)
         .withFaceDescriptor();
@@ -674,7 +660,6 @@ async function registerFace() {
         "CREATE FACE ID";
 
       return;
-
     }
 
 
@@ -688,8 +673,6 @@ async function registerFace() {
       "✅ Face detected.<br>" +
       "💾 Saving Face ID...";
 
-
-    /* Fill form */
 
     document.getElementById(
       "formEmployeeId"
@@ -717,26 +700,31 @@ async function registerFace() {
       "SAVING...";
 
 
-    form.submit();
+    /*
+      IMPORTANT:
+      Submit after all values are ready.
+    */
+
+    setTimeout(function() {
+
+      form.submit();
+
+    }, 100);
 
 
   } catch (error) {
 
     console.error(error);
 
-
     status.innerHTML =
       "❌ Face processing error.<br>" +
       error.message;
-
 
     button.disabled = false;
 
     button.innerText =
       "CREATE FACE ID";
-
   }
-
 }
 
 
@@ -748,15 +736,12 @@ window.addEventListener(
   "message",
   function(event) {
 
-
     if (
       !event.data ||
       event.data.type !==
       "FACE_REGISTRATION_RESULT"
     ) {
-
       return;
-
     }
 
 
@@ -800,8 +785,7 @@ window.addEventListener(
         "REGISTERED";
 
 
-      button.disabled =
-        true;
+      button.disabled = true;
 
 
       closeBtn.classList.remove(
@@ -817,27 +801,10 @@ window.addEventListener(
             track =>
               track.stop()
           );
-
       }
 
 
-      /*
-        Try to close the window
-        if browser allows it.
-      */
-
-      setTimeout(
-        function() {
-
-          window.close();
-
-        },
-        2000
-      );
-
-
       return;
-
     }
 
 
@@ -854,9 +821,7 @@ window.addEventListener(
         result.message;
 
 
-      button.disabled =
-        false;
-
+      button.disabled = false;
 
       button.innerText =
         "CREATE FACE ID";
@@ -866,9 +831,7 @@ window.addEventListener(
         "hidden"
       );
 
-
       return;
-
     }
 
 
@@ -885,9 +848,7 @@ window.addEventListener(
         result.message;
 
 
-      button.disabled =
-        false;
-
+      button.disabled = false;
 
       button.innerText =
         "CREATE FACE ID";
@@ -897,9 +858,7 @@ window.addEventListener(
         "hidden"
       );
 
-
       return;
-
     }
 
 
@@ -914,9 +873,7 @@ window.addEventListener(
       result.message;
 
 
-    button.disabled =
-      false;
-
+    button.disabled = false;
 
     button.innerText =
       "CREATE FACE ID";
@@ -939,7 +896,6 @@ function closePage() {
         track =>
           track.stop()
       );
-
   }
 
 
