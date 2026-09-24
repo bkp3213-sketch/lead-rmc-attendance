@@ -1,94 +1,484 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LEAD RMC Attendance</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEAD RMC Attendance</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 30px;
-      background: #f4f6f8;
-    }
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.min.js"></script>
 
-    video {
-      width: 100%;
-      max-width: 400px;
-      border-radius: 15px;
-      background: #000;
-      margin-top: 20px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 14px 30px;
-      border: none;
-      border-radius: 10px;
-      background: #1976d2;
-      color: white;
-      font-size: 17px;
-    }
-
-    #status {
-      margin-top: 15px;
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f3f6fa;
+  color:#172033;
+}
+.container{
+  width:min(430px,94%);
+  margin:25px auto;
+}
+.card{
+  background:white;
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 8px 30px rgba(0,0,0,.10);
+}
+.header{
+  text-align:center;
+  margin-bottom:18px;
+}
+.logo{
+  width:64px;
+  height:64px;
+  border-radius:16px;
+  background:#0d6efd;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 12px;
+  font-size:25px;
+  font-weight:700;
+}
+h1{font-size:24px;margin:0 0 5px}
+.subtitle{color:#687386;font-size:14px}
+.camera{
+  position:relative;
+  width:100%;
+  aspect-ratio:4/3;
+  background:#111;
+  border-radius:16px;
+  overflow:hidden;
+  margin:18px 0;
+}
+video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform:scaleX(-1);
+}
+.face-box{
+  position:absolute;
+  left:12%;
+  top:10%;
+  width:76%;
+  height:80%;
+  border:2px solid rgba(255,255,255,.8);
+  border-radius:45%;
+  pointer-events:none;
+}
+.status{
+  background:#f4f7fb;
+  border-radius:12px;
+  padding:13px;
+  text-align:center;
+  font-size:14px;
+  line-height:1.5;
+  margin:14px 0;
+}
+.status.success{background:#e9f8ef;color:#16713a}
+.status.error{background:#fff0f0;color:#a52121}
+.buttons{display:grid;gap:10px}
+button{
+  width:100%;
+  border:0;
+  border-radius:12px;
+  padding:14px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+button:disabled{opacity:.55;cursor:not-allowed}
+.checkin{background:#198754;color:white}
+.checkout{background:#dc3545;color:white}
+.info{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+.info-box{
+  background:#f7f8fa;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+}
+.label{font-size:11px;color:#7b8492}
+.value{font-size:13px;font-weight:700;margin-top:3px}
+.note{
+  text-align:center;
+  color:#7a8492;
+  font-size:12px;
+  margin-top:15px;
+}
+</style>
 </head>
 
 <body>
+<div class="container">
+  <div class="card">
 
-  <h1>LEAD RMC</h1>
-  <h2>Attendance</h2>
+    <div class="header">
+      <div class="logo">LR</div>
+      <h1>LEAD RMC</h1>
+      <div class="subtitle">Employee Attendance</div>
+    </div>
 
-  <button onclick="startCamera()">
-    📷 START CAMERA
-  </button>
+    <div class="camera">
+      <video id="video" autoplay muted playsinline></video>
+      <div class="face-box"></div>
+    </div>
 
-  <br>
+    <div id="status" class="status">
+      ⏳ Loading face recognition...
+    </div>
 
-  <video id="camera" autoplay playsinline></video>
+    <div class="buttons">
+      <button id="checkInBtn" class="checkin" onclick="markAttendance('checkIn')" disabled>
+        CHECK IN
+      </button>
 
-  <div id="status">
-    Camera not started
+      <button id="checkOutBtn" class="checkout" onclick="markAttendance('checkOut')" disabled>
+        CHECK OUT
+      </button>
+    </div>
+
+    <div class="info">
+      <div class="info-box">
+        <div class="label">OFFICE</div>
+        <div class="value">LEAD RMC</div>
+      </div>
+      <div class="info-box">
+        <div class="label">ALLOWED RADIUS</div>
+        <div class="value">50 metres</div>
+      </div>
+    </div>
+
+    <div class="note">
+      Face verification and office location are required for attendance.
+    </div>
+
   </div>
-
+</div>
 
 <script>
+const APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbwVkeLVCtXD9GW42p9V7BZ-ST6p60LfrD6koc4p8D4u035hKaoB7dgFSUNG_XidBOfi/exec";
 
-async function startCamera() {
+const MODEL_URLS = [
+  "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/model/",
+  "https://unpkg.com/@vladmandic/face-api@1.7.15/model/"
+];
 
-  const status =
-    document.getElementById("status");
+const OFFICE_LAT = 18.6094356;
+const OFFICE_LNG = 73.9188644;
+const ALLOWED_RADIUS = 50;
 
-  const video =
-    document.getElementById("camera");
+let cameraStream = null;
+let appReady = false;
+let busy = false;
 
-  try {
+const statusEl = document.getElementById("status");
+const checkInBtn = document.getElementById("checkInBtn");
+const checkOutBtn = document.getElementById("checkOutBtn");
+const video = document.getElementById("video");
 
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user"
-        },
-        audio: false
-      });
-
-    video.srcObject = stream;
-
-    status.innerHTML =
-      "✅ Camera working!";
-
-  } catch (error) {
-
-    status.innerHTML =
-      "❌ Camera Error: " + error.message;
-
-  }
-
+function setStatus(message, type = "") {
+  statusEl.className = "status " + type;
+  statusEl.innerHTML = message;
 }
 
-</script>
+async function loadModels() {
+  for (const url of MODEL_URLS) {
+    try {
+      setStatus("⏳ Loading face recognition models...");
+      await faceapi.nets.tinyFaceDetector.loadFromUri(url);
+      await faceapi.nets.faceLandmark68TinyNet.loadFromUri(url);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(url);
+      return;
+    } catch (error) {
+      console.warn("Model URL failed:", url, error);
+    }
+  }
+  throw new Error("Face recognition models could not be loaded.");
+}
 
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("Camera is not supported by this browser.");
+  }
+
+  cameraStream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: "user",
+      width: { ideal: 640 },
+      height: { ideal: 480 }
+    },
+    audio: false
+  });
+
+  video.srcObject = cameraStream;
+
+  await new Promise(resolve => {
+    if (video.readyState >= 2) resolve();
+    else video.onloadedmetadata = resolve;
+  });
+}
+
+async function initialise() {
+  try {
+    await loadModels();
+
+    setStatus("📷 Starting camera...");
+    await startCamera();
+
+    appReady = true;
+    checkInBtn.disabled = false;
+    checkOutBtn.disabled = false;
+
+    setStatus(
+      "✅ Ready.<br>Look directly at the camera and choose Check In or Check Out."
+    );
+
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      "❌ " + escapeHtml(error.message) +
+      "<br>Allow camera access and reload the page.",
+      "error"
+    );
+  }
+}
+
+async function captureDescriptor() {
+  const detection = await faceapi
+    .detectSingleFace(
+      video,
+      new faceapi.TinyFaceDetectorOptions({
+        inputSize: 320,
+        scoreThreshold: 0.5
+      })
+    )
+    .withFaceLandmarks(true)
+    .withFaceDescriptor();
+
+  if (!detection) {
+    throw new Error(
+      "Face not detected. Keep your face clearly visible and look at the camera."
+    );
+  }
+
+  return Array.from(detection.descriptor);
+}
+
+async function postData(params) {
+  const body = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    body.append(key, value);
+  });
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: body.toString()
+  });
+
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Server response:", text);
+    throw new Error("Invalid response from attendance server.");
+  }
+}
+
+async function verifyFace(descriptor) {
+  return await postData({
+    action: "verifyFace",
+    descriptor: JSON.stringify(descriptor)
+  });
+}
+
+function getLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location is not supported by this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(position),
+      error => {
+        let message = "Unable to get your location.";
+
+        if (error.code === 1) {
+          message = "Location permission was denied. Please allow location access.";
+        } else if (error.code === 2) {
+          message = "Your location could not be determined.";
+        } else if (error.code === 3) {
+          message = "Location request timed out. Please try again.";
+        }
+
+        reject(new Error(message));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  });
+}
+
+async function markAttendance(action) {
+  if (!appReady || busy) return;
+
+  busy = true;
+  checkInBtn.disabled = true;
+  checkOutBtn.disabled = true;
+
+  const actionName = action === "checkIn" ? "Check In" : "Check Out";
+
+  try {
+    setStatus("📷 Scanning face...");
+    const descriptor = await captureDescriptor();
+
+    setStatus("🔍 Verifying face...");
+    const faceResult = await verifyFace(descriptor);
+
+    if (!faceResult.success) {
+      setStatus(
+        "❌ <b>Face verification failed</b><br>" +
+        escapeHtml(faceResult.message || "Face not recognised."),
+        "error"
+      );
+      return;
+    }
+
+    setStatus(
+      "✅ Face verified.<br>" +
+      "<b>" + escapeHtml(faceResult.employeeName) + "</b><br>" +
+      "📍 Checking office location..."
+    );
+
+    const position = await getLocation();
+
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+
+    const distance = calculateDistance(
+      latitude,
+      longitude,
+      OFFICE_LAT,
+      OFFICE_LNG
+    );
+
+    if (distance > ALLOWED_RADIUS) {
+      setStatus(
+        "❌ <b>Outside office location</b><br>" +
+        "Distance: " + Math.round(distance) + " metres<br>" +
+        "Allowed: " + ALLOWED_RADIUS + " metres",
+        "error"
+      );
+      return;
+    }
+
+    setStatus(
+      "📍 You are " + Math.round(distance) +
+      " m from the office.<br>Saving " + actionName + "..."
+    );
+
+    const result = await postData({
+      action: action,
+      employeeId: faceResult.employeeId,
+      employeeName: faceResult.employeeName,
+      latitude: latitude,
+      longitude: longitude
+    });
+
+    if (result.success) {
+      if (action === "checkIn") {
+        setStatus(
+          "✅ <b>CHECK-IN SUCCESSFUL!</b><br><br>" +
+          "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
+          "Time: " + escapeHtml(result.time || "") + "<br>" +
+          "Distance: " + escapeHtml(String(result.distance || Math.round(distance))) + " m",
+          "success"
+        );
+      } else {
+        setStatus(
+          "✅ <b>CHECK-OUT SUCCESSFUL!</b><br><br>" +
+          "Employee: " + escapeHtml(faceResult.employeeName) + "<br>" +
+          "Time: " + escapeHtml(result.time || "") + "<br>" +
+          "Working Hours: " + escapeHtml(result.workingHours || "") + "<br>" +
+          "Distance: " + escapeHtml(String(result.distance || Math.round(distance))) + " m",
+          "success"
+        );
+      }
+    } else {
+      setStatus(
+        "❌ " + escapeHtml(result.message || "Attendance failed."),
+        "error"
+      );
+    }
+
+  } catch (error) {
+    console.error(error);
+    setStatus("❌ " + escapeHtml(error.message), "error");
+  } finally {
+    busy = false;
+
+    if (appReady) {
+      checkInBtn.disabled = false;
+      checkOutBtn.disabled = false;
+    }
+  }
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+
+  const c =
+    2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+  return R * c;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+window.addEventListener("beforeunload", () => {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+  }
+});
+
+window.addEventListener("load", initialise);
+</script>
 </body>
 </html>
