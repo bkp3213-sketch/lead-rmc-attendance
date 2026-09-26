@@ -218,7 +218,7 @@ iframe {
 <form
   id="registrationForm"
   method="POST"
-  target="_blank">
+  target="appsScriptFrame">
 
   <input
     type="hidden"
@@ -582,129 +582,119 @@ async function registerFace() {
       .trim()
       .toUpperCase();
 
-
   const status =
     document.getElementById("status");
-
 
   const button =
     document.getElementById("captureBtn");
 
-
   if (!employeeId) {
-
-    status.innerHTML =
-      "⚠️ Enter Employee ID.";
-
+    status.innerHTML = "⚠️ Enter Employee ID.";
     return;
   }
-
 
   if (!employeeFound) {
-
-    status.innerHTML =
-      "❌ Employee ID not found.";
-
+    status.innerHTML = "❌ Employee ID not found.";
     return;
   }
-
 
   if (!currentEmployeeName) {
-
-    status.innerHTML =
-      "❌ Employee name not found.";
-
+    status.innerHTML = "❌ Employee name not found.";
     return;
   }
 
-
   button.disabled = true;
-
-  button.innerText =
-    "SCANNING...";
-
-
-  status.innerHTML =
-    "📷 Detecting face...";
-
+  button.innerText = "SCANNING...";
 
   try {
 
     const video =
       document.getElementById("video");
 
+    const descriptors = [];
 
-    const detection =
-      await faceapi
-        .detectSingleFace(
-          video,
-          new faceapi.TinyFaceDetectorOptions({
-            inputSize: 320,
-            scoreThreshold: 0.5
-          })
-        )
-        .withFaceLandmarks(true)
-        .withFaceDescriptor();
+    // Capture several face samples instead of only one.
+    const TOTAL_SAMPLES = 7;
+    const SAMPLE_DELAY = 350;
 
-
-    if (!detection) {
+    for (let i = 0; i < TOTAL_SAMPLES; i++) {
 
       status.innerHTML =
-        "❌ Face not detected.<br>" +
-        "Keep your face clearly visible.";
+        "📷 Face scan " +
+        (i + 1) +
+        " / " +
+        TOTAL_SAMPLES +
+        "<br>Keep your face straight and clearly visible.";
 
-      button.disabled = false;
+      let detection = null;
 
-      button.innerText =
-        "CREATE FACE ID";
+      // Give the camera a few quick attempts for each sample.
+      for (let attempt = 0; attempt < 4; attempt++) {
 
-      return;
-    }
+        detection =
+          await faceapi
+            .detectSingleFace(
+              video,
+              new faceapi.TinyFaceDetectorOptions({
+                inputSize: 320,
+                scoreThreshold: 0.5
+              })
+            )
+            .withFaceLandmarks(true)
+            .withFaceDescriptor();
 
+        if (detection) break;
 
-    const descriptor =
-      Array.from(
-        detection.descriptor
+        await new Promise(resolve =>
+          setTimeout(resolve, 120)
+        );
+      }
+
+      if (!detection) {
+        throw new Error(
+          "Face was not detected during scan " +
+          (i + 1) +
+          ". Please keep your face clearly visible and try again."
+        );
+      }
+
+      descriptors.push(
+        Array.from(detection.descriptor)
       );
 
+      if (i < TOTAL_SAMPLES - 1) {
+        await new Promise(resolve =>
+          setTimeout(resolve, SAMPLE_DELAY)
+        );
+      }
+    }
 
     status.innerHTML =
-      "✅ Face detected.<br>" +
-      "💾 Saving Face ID...";
+      "✅ Face samples captured.<br>" +
+      "🔍 Checking for duplicate face...";
 
-
+    // Send all samples to Apps Script.
     document.getElementById(
       "formEmployeeId"
-    ).value =
-      employeeId;
-
+    ).value = employeeId;
 
     document.getElementById(
       "formDescriptor"
-    ).value =
-      JSON.stringify(descriptor);
+    ).value = JSON.stringify(descriptors);
 
-
-    button.innerText =
-      "SAVING...";
-
+    button.innerText = "CHECKING...";
 
     const form =
       document.getElementById(
         "registrationForm"
       );
 
+    form.action = APPS_SCRIPT_URL;
 
-    form.action =
-      APPS_SCRIPT_URL;
+    // Keep the result in the same page/hidden iframe.
+    form.target = "appsScriptFrame";
 
-
-    /*
-      target="_blank" opens the Apps Script
-      success/failure page in a new tab.
-    */
     form.submit();
-
 
   } catch (error) {
 
@@ -715,9 +705,7 @@ async function registerFace() {
       error.message;
 
     button.disabled = false;
-
-    button.innerText =
-      "CREATE FACE ID";
+    button.innerText = "CREATE FACE ID";
   }
 }
 
