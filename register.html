@@ -211,7 +211,7 @@ iframe {
   </div>
 
   <div class="small">
-    Enter Employee ID and look directly at the camera.
+    Select Employee ID and look directly at the camera.
   </div>
 
   <!-- CLOSE BUTTON -->
@@ -265,7 +265,7 @@ const APPS_SCRIPT_URL =
 async function loadEmployeeIdList() {
 
   const list =
-    document.getElementById("employeeIdList");
+    document.getElementById("employeeId");
 
   try {
 
@@ -490,7 +490,7 @@ async function startCamera() {
 
     status.innerHTML =
       "✅ Camera ready.<br>" +
-      "Enter Employee ID.";
+      "Select Employee ID.";
 
 
   } catch (error) {
