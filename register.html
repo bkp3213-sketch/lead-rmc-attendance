@@ -165,8 +165,11 @@ iframe {
   <input
     type="text"
     id="employeeId"
-    placeholder="Enter Employee ID"
+    list="employeeIdList"
+    placeholder="Select or enter Employee ID"
     autocomplete="off">
+
+  <datalist id="employeeIdList"></datalist>
 
   <!-- EMPLOYEE NAME -->
   <div id="employeeName" class="nameBox">
@@ -241,6 +244,55 @@ iframe {
 
 const APPS_SCRIPT_URL =
 "https://script.google.com/macros/s/AKfycbwVkeLVCtXD9GW42p9V7BZ-ST6p60LfrD6koc4p8D4u035hKaoB7dgFSUNG_XidBOfi/exec";
+
+/* =========================================
+   LOAD EMPLOYEE ID LIST
+========================================= */
+
+async function loadEmployeeIdList() {
+
+  const list =
+    document.getElementById("employeeIdList");
+
+  try {
+
+    const response =
+      await fetch(
+        APPS_SCRIPT_URL +
+        "?action=getEmployeeList"
+      );
+
+    const result =
+      await response.json();
+
+    if (!result.success || !Array.isArray(result.employees)) {
+      return;
+    }
+
+    list.innerHTML = "";
+
+    result.employees.forEach(employee => {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        employee.employeeId;
+
+      option.label =
+        employee.employeeName;
+
+      list.appendChild(option);
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Unable to load employee list:",
+      error
+    );
+  }
+}
 
 /*
   Two model sources.
@@ -711,6 +763,58 @@ async function registerFace() {
 
 
 /* =========================================
+   APPS SCRIPT RESULT
+========================================= */
+
+window.addEventListener("message", function(event) {
+
+  const data = event.data;
+
+  if (!data || data.type !== "FACE_REGISTRATION_RESULT") {
+    return;
+  }
+
+  const status =
+    document.getElementById("status");
+
+  const button =
+    document.getElementById("captureBtn");
+
+  const closeBtn =
+    document.getElementById("closeBtn");
+
+  if (data.success) {
+
+    status.innerHTML =
+      "✅ <strong>Face registered successfully!</strong><br>" +
+      "Employee ID: " +
+      (data.employeeId || "") +
+      "<br>Employee Name: " +
+      (data.employeeName || currentEmployeeName);
+
+    status.className = "success";
+
+    button.innerText = "REGISTERED";
+    button.disabled = true;
+
+    closeBtn.classList.remove("hidden");
+
+  } else {
+
+    status.innerHTML =
+      "❌ " +
+      (data.message || "Face registration failed.");
+
+    status.className = "error";
+
+    button.disabled = false;
+    button.innerText = "CREATE FACE ID";
+  }
+
+}, false);
+
+
+/* =========================================
    CLOSE PAGE
 ========================================= */
 
@@ -738,7 +842,10 @@ function closePage() {
 
 window.addEventListener(
   "load",
-  loadFaceModels
+  function() {
+    loadFaceModels();
+    loadEmployeeIdList();
+  }
 );
 
 </script>
