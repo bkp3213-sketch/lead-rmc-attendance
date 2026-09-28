@@ -74,6 +74,22 @@ input:focus {
   border-color: #1976d2;
 }
 
+.employeeSelect {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+  background: white;
+  color: #222;
+}
+
+.employeeSelect:focus {
+  border-color: #1976d2;
+}
+
 .nameBox {
   width: 100%;
   padding: 14px;
@@ -162,14 +178,11 @@ iframe {
     Employee ID
   </label>
 
-  <input
-    type="text"
+  <select
     id="employeeId"
-    list="employeeIdList"
-    placeholder="Select or enter Employee ID"
-    autocomplete="off">
-
-  <datalist id="employeeIdList"></datalist>
+    class="employeeSelect">
+    <option value="">SELECT EMPLOYEE ID</option>
+  </select>
 
   <!-- EMPLOYEE NAME -->
   <div id="employeeName" class="nameBox">
@@ -269,7 +282,8 @@ async function loadEmployeeIdList() {
       return;
     }
 
-    list.innerHTML = "";
+    list.innerHTML =
+      '<option value="">SELECT EMPLOYEE ID</option>';
 
     result.employees.forEach(employee => {
 
@@ -279,7 +293,9 @@ async function loadEmployeeIdList() {
       option.value =
         employee.employeeId;
 
-      option.label =
+      option.textContent =
+        employee.employeeId +
+        " - " +
         employee.employeeName;
 
       list.appendChild(option);
@@ -602,21 +618,9 @@ async function getEmployeeName() {
 document
   .getElementById("employeeId")
   .addEventListener(
-    "input",
+    "change",
     function() {
-
-      this.value =
-        this.value.toUpperCase();
-
-      clearTimeout(
-        window.employeeTimer
-      );
-
-      window.employeeTimer =
-        setTimeout(
-          getEmployeeName,
-          500
-        );
+      getEmployeeName();
     }
   );
 
