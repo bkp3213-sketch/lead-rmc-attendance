@@ -251,6 +251,11 @@ iframe {
     name="descriptor"
     id="formDescriptor">
 
+  <input
+    type="hidden"
+    name="requestId"
+    id="formRequestId">
+
 </form>
 
 <script>
@@ -740,17 +745,28 @@ async function registerFace() {
 
     button.innerText = "CHECKING...";
 
+    const requestId =
+      "REG_" +
+      Date.now() +
+      "_" +
+      Math.random()
+        .toString(36)
+        .slice(2, 10);
+
+    document.getElementById(
+      "formRequestId"
+    ).value = requestId;
+
     const form =
       document.getElementById(
         "registrationForm"
       );
 
     form.action = APPS_SCRIPT_URL;
-
-    // Keep the result in the same page/hidden iframe.
     form.target = "appsScriptFrame";
-
     form.submit();
+
+    pollRegistrationResult(requestId);
 
   } catch (error) {
 
@@ -763,6 +779,101 @@ async function registerFace() {
     button.disabled = false;
     button.innerText = "CREATE FACE ID";
   }
+}
+
+
+/* =========================================
+   REGISTRATION RESULT POLLING
+========================================= */
+
+async function pollRegistrationResult(requestId) {
+
+  const status =
+    document.getElementById("status");
+
+  const button =
+    document.getElementById("captureBtn");
+
+  const closeBtn =
+    document.getElementById("closeBtn");
+
+  const maxAttempts = 30;
+  let attempt = 0;
+
+  while (attempt < maxAttempts) {
+
+    attempt++;
+
+    try {
+
+      const response =
+        await fetch(
+          APPS_SCRIPT_URL +
+          "?action=registrationStatus&requestId=" +
+          encodeURIComponent(requestId) +
+          "&t=" +
+          Date.now(),
+          {
+            cache: "no-store"
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (result && result.found) {
+
+        if (result.success) {
+
+          status.innerHTML =
+            "✅ <strong>Face registered successfully!</strong><br>" +
+            "Employee ID: " +
+            (result.employeeId || "") +
+            "<br>Employee Name: " +
+            (result.employeeName || currentEmployeeName);
+
+          status.className = "success";
+
+          button.innerText = "REGISTERED";
+          button.disabled = true;
+
+          closeBtn.classList.remove("hidden");
+
+        } else {
+
+          status.innerHTML =
+            "❌ " +
+            (result.message ||
+             "Face registration failed.");
+
+          status.className = "error";
+
+          button.disabled = false;
+          button.innerText = "CREATE FACE ID";
+        }
+
+        return;
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Registration status check failed:",
+        error
+      );
+    }
+
+    await new Promise(resolve =>
+      setTimeout(resolve, 1000)
+    );
+  }
+
+  status.innerHTML =
+    "⚠️ Server response is taking too long.<br>" +
+    "Please wait a few seconds before trying again.";
+
+  button.disabled = false;
+  button.innerText = "CREATE FACE ID";
 }
 
 
